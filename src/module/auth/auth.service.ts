@@ -4,7 +4,6 @@ import { type AuthResponseDto } from './dto/auth-response.dto'
 import { UserService } from '../user/user.service'
 import * as bcrypt from 'bcrypt'
 import { TokenService } from '../token/token.service'
-import { type Request } from 'express'
 import { type AuthRequestDto } from './dto/auth-request.dto'
 
 @Injectable()
@@ -39,10 +38,14 @@ export class AuthService {
     return tokens
   }
 
-  async refreshToken (req: Request): Promise<AuthResponseDto> {
-    const userId = req.user.id
-    const refreshToken = req.user.refreshToken
-    const existUser = await this.userService.findUserById(userId)
+  async refreshToken (refreshToken: string): Promise<AuthResponseDto> {
+    const decodedToken = this.tokenService.decodeJwtToken(refreshToken)
+
+    if (decodedToken.exp * 1000 < new Date().getTime()) {
+      throw new ForbiddenException('Access Denied')
+    }
+
+    const existUser = await this.userService.findUserById(decodedToken.id)
 
     if (!existUser?.refreshToken) {
       throw new ForbiddenException('Access Denied')

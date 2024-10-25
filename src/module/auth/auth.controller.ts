@@ -1,11 +1,10 @@
-import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common'
-import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger'
+import { Body, Controller, Post } from '@nestjs/common'
+import { ApiResponse, ApiTags } from '@nestjs/swagger'
 import { UserService } from '../user/user.service'
 import { AuthService } from './auth.service'
 import { AuthRequestDto } from './dto/auth-request.dto'
 import { AuthResponseDto } from './dto/auth-response.dto'
-import { Request } from 'express'
-import { RefreshAuthGuard } from './guards/refresh-auth.guard'
+import { RefreshTokenDTO } from './dto/refresh-token-request.dto'
 
 @ApiTags('auth')
 @Controller('auth')
@@ -16,16 +15,14 @@ export class AuthController {
   ) {}
 
   @Post('login')
-  @ApiResponse({ type: [AuthResponseDto] })
+  @ApiResponse({ type: AuthResponseDto })
   async login (@Body() userAuthRequestDto: AuthRequestDto): Promise<AuthResponseDto> {
     return await this.authService.login(userAuthRequestDto)
   }
 
-  @UseGuards(RefreshAuthGuard)
-  @ApiBearerAuth()
   @Post('refreshToken')
-  @ApiResponse({ type: [AuthResponseDto] })
-  async refreshToken (@Req() req: Request): Promise<AuthResponseDto> {
-    return await this.authService.refreshToken(req)
+  @ApiResponse({ type: AuthResponseDto })
+  async refreshToken (@Body() req: RefreshTokenDTO): Promise<AuthResponseDto> {
+    return await this.authService.refreshToken(req.refreshToken)
   }
 }

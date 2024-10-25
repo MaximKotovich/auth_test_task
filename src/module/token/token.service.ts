@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common'
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { ConfigService } from '@nestjs/config'
 import { type UserModel } from '../../models/user.model'
-import { type InterfaceGetTokensResponse } from './interfaces/get-tokens.response'
+import { type InterfaceGetTokensResponse } from './types/get-tokens.response'
+import {DecodedToken} from "./types/decoded-token";
 
 @Injectable()
 export class TokenService {
@@ -10,6 +11,17 @@ export class TokenService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService
   ) {}
+
+  decodeJwtToken (token: string): DecodedToken {
+    try {
+      return this.jwtService.decode(token) as DecodedToken
+    } catch {
+      throw new HttpException({
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        error: 'Can`t validate token'
+      }, HttpStatus.INTERNAL_SERVER_ERROR)
+    }
+  }
 
   async generateJwtAccessToken (user: UserModel): Promise<string> {
     const accessTokenPayload = { id: user.id, username: user.username, password: user.password }
